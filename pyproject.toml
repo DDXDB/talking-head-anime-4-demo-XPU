@@ -10,7 +10,7 @@ authors = [
     {name = "Pramook Khungurn", email = "pong@pixiv.co.jp"},
 ]
 readme = "README.md"
-requires-python = ">=3.10, <3.11"
+requires-python = ">=3.10"
 license = {text = "MIT"}
  
 [tool.setuptools]

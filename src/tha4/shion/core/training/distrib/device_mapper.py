@@ -5,7 +5,7 @@ import torch
 
 class SimpleCudaDeviceMapper:
     def __call__(self, rank, local_rank):
-        return torch.device("cuda", local_rank)
+        return torch.device("xpu", local_rank)
 
 
 class UserSpecifiedLocalRankToDeviceMapper:

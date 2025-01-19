@@ -407,8 +407,8 @@ class MainFrame(wx.Frame):
 if __name__ == "__main__":
     # for CUDA or MPS (Metal GPU)
     device = "cpu"
-    if torch.cuda.is_available():
-        device = "cuda:0"
+    if torch.xpu.is_available():
+        device = "xpu:0,1"
     elif torch.backends.mps.is_available():
         # model not supported on MPS,
         # so we use CPU

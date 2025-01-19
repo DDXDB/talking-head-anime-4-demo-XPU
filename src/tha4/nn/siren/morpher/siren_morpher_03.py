@@ -28,10 +28,12 @@ class SirenMorpher03Args:
                  image_channels: int,
                  pose_size: int,
                  level_args: List[SirenMorpherLevelArgs],
-                 init_func: Optional[Callable[[Module], Module]] = None):
+                 init_func: Optional[Callable[[Module], Module]] = None,
+                 dtype: Optional[torch.dtype] = torch.float):
         assert len(level_args) >= 2
         if init_func is None:
             init_func = HeInitialization()
+        self.dtype = dtype
         self.image_size = image_size
         self.init_func = init_func
         self.level_args = level_args
@@ -55,18 +57,18 @@ class SirenMorpher03(Module):
                 layers.append(SineLinearLayer(
                     in_channels=args.pose_size + 2,
                     out_channels=level_args.intermediate_channels,
-                    is_first=True))
+                    is_first=True,dtype=args.dtype))
             else:
                 layers.append(SineLinearLayer(
                     in_channels=level_args.intermediate_channels + args.pose_size + 2,
                     out_channels=level_args.intermediate_channels,
-                    is_first=False))
+                    is_first=False,dtype=args.dtype))
 
             for j in range(1, level_args.num_sine_layers - 1):
                 layers.append(SineLinearLayer(
                     in_channels=level_args.intermediate_channels,
                     out_channels=level_args.intermediate_channels,
-                    is_first=False))
+                    is_first=False,dtype=args.dtype))
 
             if i == len(args.level_args) - 1:
                 out_channels = level_args.intermediate_channels
@@ -75,7 +77,7 @@ class SirenMorpher03(Module):
             layers.append(SineLinearLayer(
                 in_channels=level_args.intermediate_channels,
                 out_channels=out_channels,
-                is_first=False))
+                is_first=False,dtype=args.dtype))
 
             self.siren_layers.append(Sequential(*layers))
 
@@ -85,13 +87,14 @@ class SirenMorpher03(Module):
             kernel_size=1,
             stride=1,
             padding=0,
-            bias=True))
+            bias=True,
+            dtype=args.dtype))
 
         self.grid_change_applier = GridChangeApplier()
 
-    def get_position_grid(self, n: int, image_size: int, device: torch.device):
+    def get_position_grid(self, n: int, image_size: int, device: torch.device, dtype:torch.dtype):
         h, w = image_size, image_size
-        identity = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], device=device).unsqueeze(0)
+        identity = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], device=device,dtype=dtype).unsqueeze(0)
         position = affine_grid(identity, [1, 1, h, w], align_corners=False) \
             .view(1, h * w, 2)
         position = torch.transpose(position, dim0=1, dim1=2).view(1, 2, h, w) \
@@ -112,7 +115,7 @@ class SirenMorpher03(Module):
         for i in range(len(self.args.level_args)):
             args = self.args.level_args[i]
             position_and_pose = torch.cat([
-                self.get_position_grid(n, args.image_size, device),
+                self.get_position_grid(n, args.image_size, device, pose.dtype),
                 self.get_pose_image(pose, args.image_size)
             ], dim=1)
             if i == 0:

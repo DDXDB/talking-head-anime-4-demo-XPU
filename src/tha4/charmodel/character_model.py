@@ -13,14 +13,16 @@ class CharacterModel:
     def __init__(self,
                  character_image_file_name: str,
                  face_morpher_file_name: str,
-                 body_morpher_file_name: str):
+                 body_morpher_file_name: str,
+                 dtype: torch.dtype):
         self.body_morpher_file_name = body_morpher_file_name
         self.face_morpher_file_name = face_morpher_file_name
         self.character_image_file_name = character_image_file_name
         self.poser = None
         self.character_image = None
+        self.dtype = dtype
 
-    def get_poser(self, device: torch.device):
+    def get_poser(self, device: torch.device ):
         if self.poser is not None:
             self.poser.to(device)
         else:
@@ -29,7 +31,9 @@ class CharacterModel:
                 module_file_names={
                     KEY_FACE_MORPHER: self.face_morpher_file_name,
                     KEY_BODY_MORPHER: self.body_morpher_file_name
-                })
+                },
+                dtype=self.dtype
+            )
         return self.poser
 
     def get_character_image(self, device: torch.device):
@@ -38,7 +42,7 @@ class CharacterModel:
             if pil_image.mode != 'RGBA':
                 raise RuntimeError("Character image is not an RGBA image!")
             self.character_image = extract_pytorch_image_from_PIL_image(pil_image)
-        self.character_image = self.character_image.to(device)
+        self.character_image = self.character_image.to(device).to(self.dtype)
         return self.character_image
 
     def save(self, file_name: str):
@@ -57,7 +61,7 @@ class CharacterModel:
             fout.write(OmegaConf.to_yaml(conf))
 
     @staticmethod
-    def load(file_name: str):
+    def load(file_name: str, dtype:torch.dtype):
         conf = OmegaConf.to_container(OmegaConf.load(file_name))
         dir = os.path.dirname(file_name)
         character_image_file_name = os.path.join(dir, conf["character_image_file_name"])
@@ -66,4 +70,5 @@ class CharacterModel:
         return CharacterModel(
             character_image_file_name,
             face_morpher_file_name,
-            body_morpher_file_name)
+            body_morpher_file_name,
+            dtype)

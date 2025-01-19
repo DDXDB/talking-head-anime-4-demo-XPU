@@ -37,7 +37,7 @@ class SirenFaceMorpher00(Module):
 
         if position is None:
             h, w = self.args.image_size, self.args.image_size
-            identity = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], device=device).unsqueeze(0)
+            identity = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], device=device,dtype=pose.dtype).unsqueeze(0)
             position = affine_grid(identity, [1, 1, h, w], align_corners=False) \
                 .view(1, h * w, 2)
             position = torch.transpose(position, dim0=1, dim1=2).view(1, 2, h, w) \

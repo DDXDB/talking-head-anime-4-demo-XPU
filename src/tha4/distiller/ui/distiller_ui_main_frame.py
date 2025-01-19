@@ -325,7 +325,7 @@ class DistillerUiMainFrame(wx.Frame):
                 self.create_help_button_func("distiller-ui-doc/params/num_gpus.html"))
             panel_sizer.Add(prefix_param_name_panel, 1, wx.EXPAND)
 
-            num_gpus = torch.cuda.device_count()
+            num_gpus = torch.xpu.device_count()
             self.num_gpus_spin_ctrl = wx.SpinCtrl(panel, initial=1, min=1, max=max(1, num_gpus))
 
             @wx_bind_event(self.num_gpus_spin_ctrl, wx.EVT_SPINCTRL)
